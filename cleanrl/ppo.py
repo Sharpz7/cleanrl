@@ -183,14 +183,14 @@ if __name__ == "__main__":
         mlflow.set_tracking_uri(args.fml_url)
         mlflow.set_experiment(args.fml_experiment_name)
 
-        for param in vars(args):
-            mlflow.log_param(param, getattr(args, param))
-
         # If run is going
         if mlflow.active_run():
             mlflow.end_run()
 
         mlflow.start_run(run_name=run_name)
+
+        for param in vars(args):
+            mlflow.log_param(param, getattr(args, param))
 
     writer = SummaryWriter(f"runs/{run_name}")
     writer.add_text(
@@ -426,6 +426,12 @@ if __name__ == "__main__":
 
         for name, value_func in SCALAR_LOGS:
             log_scalar(writer, name, value_func(), global_step)
+
+    # If videos are captured, store all in mlflow as artifacts
+    if args.capture_video and args.track_fml:
+        for file in os.listdir(f"videos/{run_name}"):
+            if file.endswith(".mp4"):
+                mlflow.log_artifact(f"videos/{run_name}/{file}")
 
     envs.close()
     writer.close()
